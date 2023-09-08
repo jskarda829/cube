@@ -364,6 +364,14 @@ export abstract class BaseDriver implements DriverInterface {
   public async tableColumnTypes(table: string): Promise<TableStructure> {
     const [schema, name] = table.split('.');
 
+    console.log('running:', `SELECT columns.column_name as ${this.quoteIdentifier('column_name')},
+             columns.table_name as ${this.quoteIdentifier('table_name')},
+             columns.table_schema as ${this.quoteIdentifier('table_schema')},
+             columns.data_type  as ${this.quoteIdentifier('data_type')}
+      FROM information_schema.columns
+      WHERE table_name = ${this.param(0)} AND table_schema = ${this.param(1)}
+      ${getEnv('fetchColumnsByOrdinalPosition') ? 'ORDER BY columns.ordinal_position' : ''}`);
+
     const columns = await this.query<TableColumnQueryResult>(
       `SELECT columns.column_name as ${this.quoteIdentifier('column_name')},
              columns.table_name as ${this.quoteIdentifier('table_name')},
@@ -371,7 +379,7 @@ export abstract class BaseDriver implements DriverInterface {
              columns.data_type  as ${this.quoteIdentifier('data_type')}
       FROM information_schema.columns
       WHERE table_name = ${this.param(0)} AND table_schema = ${this.param(1)}
-      ORDER BY columns.ordinal_position`,
+      ${getEnv('fetchColumnsByOrdinalPosition') ? 'ORDER BY columns.ordinal_position' : ''}`,
       [name, schema]
     );
 
